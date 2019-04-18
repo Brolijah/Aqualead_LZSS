@@ -1,0 +1,9 @@
+# File extensions
+*.zip
+*.autosave
+*pro.user
+*pro.user.*
+
+# Folders
+!/build/
+/build/*

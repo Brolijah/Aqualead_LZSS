@@ -258,7 +258,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                 {
                     local_var1 += ((1 << (tempAllzFlag - allzFlag2)) - 1) << allzFlag2;
                 }
-                local_var1 += 1;
+                ++local_var1;
                 if((dst + disp_length + local_var1) >= decoded_eof) // finish copying bytes and return
                 {
                     if(disp_length)
@@ -269,15 +269,10 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                         } while(--disp_length != 0);
                     }
 
-                    if(local_var1)
+                    if(local_var1) // This is the only copy-to-dst I am uncertain about
                     {
-                        //printf("WARNING: decode() : if local_var1 (%d)\n", local_var1);
-                        // Every way I interpret the assembly and both IDA's and
-                        // Ghidra's psuedocode, I very clearly read that this loop
-                        // seemingly only copies bytes IN PLACE of the dst, not
-                        // incrementally.
                         do {
-                            *dst = *encoded_src;
+                            *dst++ = *encoded_src++;
                         } while(--local_var1 != 0);
                     }
 
@@ -410,10 +405,8 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
             } while (--disp_length != 0);
         }
     }
-    // Eh, seems safe.
-    return ( ((encoded_src == encoded_eof) || ((encoded_src+1) == encoded_eof)) &&
-             ((        dst == decoded_eof) || ((        dst+1) == decoded_eof))
-           ) ? fullSize : 0;
+
+    return ((dst == decoded_eof) || (dst == (decoded_eof+1))) ? fullSize : 0;
 }
 
 s32 ALLZ_AnalyzeBlock(s32* encFlags, u8 alFlag, u8** ptr_encoded_data)

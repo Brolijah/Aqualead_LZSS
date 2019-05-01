@@ -173,8 +173,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
     s32 local_var1 = 0;     /// Used during ALLZ FLAG 2 decode. Used to copy unencoded bytes.
     s32 local_var3 = 0;     /// Used during ALLZ FLAG 1 decode. Gets assigned to disp_offset.
     s32 local_var5 = 0;     /// Used during ALAR FLAG 2 decode. Gets assigned to disp_length.
-    u8 tempAllzFlag;    /// Temporary ALLZ Flag for decoding.
-    u8 tempAlarFlag;    /// Temporary ALAR Flag for decoding.
+    u8  tempAlFlag;     /// Temporary Aqualead Flag for decoding.
     s32 tempEncFlag;    /// Temporary copy of lzssFlags[0] used to escape loops.
     u8* src_temp;       /// Temporary copy of encoded_src used to copy duplicate unencoded bytes.
 
@@ -222,7 +221,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
 
     if(encoded_src <= encoded_eof)
     {
-        while((dst + disp_length) <= decoded_eof)
+        while((dst + disp_length) < decoded_eof)
         {
             while(lzssFlags[1] == 0)
             {
@@ -230,8 +229,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                 lzssFlags[1] += 8;
             }
 
-            tempAllzFlag = 0;
-            tempAlarFlag = 0;
+            tempAlFlag = 0;
             tempEncFlag = lzssFlags[0];
             lzssFlags[0] >>= 1;
             lzssFlags[1] -= 1;
@@ -239,7 +237,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
             if( !(tempEncFlag & 0x01) )
             {
     // DECODE WITH ALLZ FLAG 2
-                tempAllzFlag = allzFlag2;
+                tempAlFlag = allzFlag2;
                 while(1)
                 {
                     while(lzssFlags[1] == 0)
@@ -251,12 +249,12 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                     lzssFlags[0] >>= 1;
                     lzssFlags[1] -= 1;
                     if ( !(tempEncFlag & 0x01) ) break;
-                    ++tempAllzFlag;
+                    ++tempAlFlag;
                 }
-                local_var1 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAllzFlag, &encoded_src);
-                if(tempAllzFlag > allzFlag2)
+                local_var1 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAlFlag, &encoded_src);
+                if(tempAlFlag > allzFlag2)
                 {
-                    local_var1 += ((1 << (tempAllzFlag - allzFlag2)) - 1) << allzFlag2;
+                    local_var1 += ((1 << (tempAlFlag - allzFlag2)) - 1) << allzFlag2;
                 }
                 ++local_var1;
                 if((dst + disp_length + local_var1) >= decoded_eof) // finish copying bytes and return
@@ -269,7 +267,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                         } while(--disp_length != 0);
                     }
 
-                    if(local_var1) // This is the only copy-to-dst I am uncertain about
+                    if(local_var1)
                     {
                         do {
                             *dst++ = *encoded_src++;
@@ -281,7 +279,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
 
     // DECODE WITH ALLZ FLAG 1
                 src_temp = encoded_src;
-                tempAllzFlag = allzFlag1;
+                tempAlFlag = allzFlag1;
                 encoded_src += local_var1;
                 while(1)
                 {
@@ -294,15 +292,15 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                     lzssFlags[0] >>= 1;
                     lzssFlags[1] -= 1;
                     if ( !(tempEncFlag & 0x01) ) break;
-                    ++tempAllzFlag;
+                    ++tempAlFlag;
                 }
-                local_var3 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAllzFlag, &encoded_src);
-                if(tempAllzFlag > allzFlag1)
+                local_var3 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAlFlag, &encoded_src);
+                if(tempAlFlag > allzFlag1)
                 {
-                    local_var3 += (((1 << (tempAllzFlag - allzFlag1)) - 1) << allzFlag1);
+                    local_var3 += (((1 << (tempAlFlag - allzFlag1)) - 1) << allzFlag1);
                 }
     // DECODE WITH ALAR FLAG 2
-                tempAlarFlag = alarFlag2;
+                tempAlFlag = alarFlag2;
                 while(1)
                 {
                     while(lzssFlags[1] == 0)
@@ -314,12 +312,12 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                     lzssFlags[0] >>= 1;
                     lzssFlags[1] -= 1;
                     if ( !(tempEncFlag & 0x01) ) break;
-                    ++tempAlarFlag;
+                    ++tempAlFlag;
                 }
-                local_var5 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAlarFlag, &encoded_src);
-                if(tempAlarFlag > alarFlag2)
+                local_var5 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAlFlag, &encoded_src);
+                if(tempAlFlag > alarFlag2)
                 {
-                    local_var5 += (((1 << (tempAlarFlag - alarFlag2)) - 1) << alarFlag2);
+                    local_var5 += (((1 << (tempAlFlag - alarFlag2)) - 1) << alarFlag2);
                 }
     // COPY OVER DECODED BYTES
                 if(disp_length)
@@ -339,7 +337,7 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
 
             } else {
     // DECODE WITH ALLZ FLAG 1
-                tempAllzFlag = allzFlag1;
+                tempAlFlag = allzFlag1;
                 while(1)
                 {
                     while(lzssFlags[1] == 0)
@@ -351,15 +349,15 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                     lzssFlags[0] >>= 1;
                     lzssFlags[1] -= 1;
                     if ( !(tempEncFlag & 0x01) ) break;
-                    ++tempAllzFlag;
+                    ++tempAlFlag;
                 }
-                local_var3 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAllzFlag, &encoded_src);
-                if(tempAllzFlag > allzFlag1)
+                local_var3 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAlFlag, &encoded_src);
+                if(tempAlFlag > allzFlag1)
                 {
-                    local_var3 += (((1 << (tempAllzFlag - allzFlag1)) - 1) << allzFlag1);
+                    local_var3 += (((1 << (tempAlFlag - allzFlag1)) - 1) << allzFlag1);
                 }
     // DECODE WITH ALAR FLAG 2
-                tempAlarFlag = alarFlag2;
+                tempAlFlag = alarFlag2;
                 while(1)
                 {
                     while(lzssFlags[1] == 0)
@@ -371,12 +369,12 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
                     lzssFlags[0] >>= 1;
                     lzssFlags[1] -= 1;
                     if( !(tempEncFlag & 0x01) ) break;
-                    ++tempAlarFlag;
+                    ++tempAlFlag;
                 }
-                local_var5 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAlarFlag, &encoded_src);
-                if(tempAlarFlag > alarFlag2)
+                local_var5 = ALLZ_AnalyzeBlock((s32*)lzssFlags, tempAlFlag, &encoded_src);
+                if(tempAlFlag > alarFlag2)
                 {
-                    local_var5 += (((1 << (tempAlarFlag - alarFlag2)) - 1) << alarFlag2);
+                    local_var5 += (((1 << (tempAlFlag - alarFlag2)) - 1) << alarFlag2);
                 }
     // COPY OVER DECODED BYTES
                 if(disp_length)
@@ -406,7 +404,11 @@ size_t ALLZ_Decode(u8** ptr_dst, u8* src, size_t srcSize)
         }
     }
 
-    return ((dst == decoded_eof) || (dst == (decoded_eof+1))) ? fullSize : 0;
+    /* printf("DEBUG:\n"
+           "  decoded_dst = 0x%08X\n"
+           "  decoded_eof = 0x%08X\n\n", dst, decoded_eof); */
+
+    return (dst == decoded_eof) ? fullSize : 0;
 }
 
 s32 ALLZ_AnalyzeBlock(s32* encFlags, u8 alFlag, u8** ptr_encoded_data)
